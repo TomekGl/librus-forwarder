@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/TomekGl/librus-forwarder/compare/v1.1.0...v1.2.0) (2026-11-13)
+
+
+### Features
+
+* also fetch messages from the Sent folder ([#7](https://github.com/TomekGl/librus-forwarder/issues/7)) ([15ac0ae](https://github.com/TomekGl/librus-forwarder/commit/15ac0aee4a77a4d35f4618fe02d36d52c6a2c17b))
+
 ## [1.1.0](https://github.com/TomekGl/librus-forwarder/compare/v1.0.0...v1.1.0) (2026-11-13)
 
 
