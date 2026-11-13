@@ -3,6 +3,7 @@ import type { Logger } from "./logger.js";
 import { LibrusClient, type MessageSummary } from "./librus/client.js";
 import { StateStore, type FetchState } from "./state/store.js";
 import type { Notifier } from "./notifiers/types.js";
+import { MessageArchiver } from "./archive/messageArchiver.js";
 
 export class FetchJob {
   private running = false;
@@ -13,6 +14,7 @@ export class FetchJob {
     private readonly logger: Logger,
     private readonly stateStore: StateStore,
     private readonly notifiers: Notifier[],
+    private readonly archiver: MessageArchiver,
   ) {}
 
   trigger(): void {
@@ -85,6 +87,8 @@ export class FetchJob {
           },
           `Pobrano treść wiadomości ${detail.id}`,
         );
+
+        await this.archiver.archive(detail);
 
         for (const notifier of this.notifiers) {
           await notifier.notify({
