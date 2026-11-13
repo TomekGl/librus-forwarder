@@ -2,6 +2,7 @@ import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { buildNotifiers } from "./notifiers/index.js";
 import { StateStore } from "./state/store.js";
+import { MessageArchiver } from "./archive/messageArchiver.js";
 import { FetchJob } from "./fetchJob.js";
 import { buildServer } from "./server.js";
 
@@ -9,7 +10,8 @@ const config = loadConfig();
 const logger = createLogger(config);
 const notifiers = buildNotifiers(config, logger);
 const stateStore = new StateStore(config.stateFilePath, logger);
-const fetchJob = new FetchJob(config, logger, stateStore, notifiers);
+const archiver = new MessageArchiver(config.messageArchiveDir, logger);
+const fetchJob = new FetchJob(config, logger, stateStore, notifiers, archiver);
 const app = buildServer(config, logger, fetchJob);
 
 app

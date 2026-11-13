@@ -6,6 +6,7 @@ export interface AppConfig {
   notifyTargets: string[];
   slackWebhookUrl?: string;
   stateFilePath: string;
+  messageArchiveDir: string;
   inboxFolderId: number;
   logLevel: string;
   logPretty: boolean;
@@ -41,6 +42,7 @@ export function loadConfig(): AppConfig {
     notifyTargets,
     slackWebhookUrl: process.env.SLACK_WEBHOOK_URL,
     stateFilePath: process.env.STATE_FILE_PATH ?? "/data/state.json",
+    messageArchiveDir: process.env.MESSAGE_ARCHIVE_DIR ?? "/data/archive",
     inboxFolderId: Number(process.env.LIBRUS_INBOX_FOLDER_ID ?? 5),
     logLevel: process.env.LOG_LEVEL ?? "info",
     logPretty: process.env.LOG_PRETTY === "true",
