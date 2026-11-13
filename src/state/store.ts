@@ -2,9 +2,13 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Logger } from "../logger.js";
 
-export interface FetchState {
+export interface FolderState {
   lastMessageId: number;
   lastMessageDate: string;
+}
+
+export interface FetchState {
+  folders: Record<string, FolderState>;
   updatedAt: string;
 }
 
@@ -17,7 +21,15 @@ export class StateStore {
   async load(): Promise<FetchState | null> {
     try {
       const raw = await fs.readFile(this.filePath, "utf8");
-      return JSON.parse(raw) as FetchState;
+      const parsed = JSON.parse(raw) as Partial<FetchState> | null;
+      if (!parsed || typeof parsed.folders !== "object" || parsed.folders === null) {
+        this.logger.warn(
+          { event: "state_corrupt", path: this.filePath },
+          "Stan ma nierozpoznany format, startuję od zera",
+        );
+        return null;
+      }
+      return parsed as FetchState;
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code === "ENOENT") {

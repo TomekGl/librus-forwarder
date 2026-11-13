@@ -7,7 +7,7 @@ export interface AppConfig {
   slackWebhookUrl?: string;
   stateFilePath: string;
   messageArchiveDir: string;
-  inboxFolderId: number;
+  folderIds: number[];
   logLevel: string;
   logPretty: boolean;
   requestTimeoutMs: number;
@@ -34,6 +34,15 @@ export function loadConfig(): AppConfig {
     throw new Error('NOTIFY_TARGETS includes "slack" but SLACK_WEBHOOK_URL is not set');
   }
 
+  const folderIds = (process.env.LIBRUS_FOLDER_IDS ?? "5,6")
+    .split(",")
+    .map((v) => Number(v.trim()))
+    .filter((n) => Number.isFinite(n));
+
+  if (folderIds.length === 0) {
+    throw new Error("LIBRUS_FOLDER_IDS must list at least one folder id");
+  }
+
   return {
     port: Number(process.env.PORT ?? 8080),
     fetchSecret: required("FETCH_SECRET"),
@@ -43,7 +52,7 @@ export function loadConfig(): AppConfig {
     slackWebhookUrl: process.env.SLACK_WEBHOOK_URL,
     stateFilePath: process.env.STATE_FILE_PATH ?? "/data/state.json",
     messageArchiveDir: process.env.MESSAGE_ARCHIVE_DIR ?? "/data/archive",
-    inboxFolderId: Number(process.env.LIBRUS_INBOX_FOLDER_ID ?? 5),
+    folderIds,
     logLevel: process.env.LOG_LEVEL ?? "info",
     logPretty: process.env.LOG_PRETTY === "true",
     requestTimeoutMs: Number(process.env.LIBRUS_REQUEST_TIMEOUT_MS ?? 30000),

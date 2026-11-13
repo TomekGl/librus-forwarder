@@ -18,10 +18,14 @@ export class MessageArchiver {
     const monthDir = path.join(this.archiveDir, formatMonth(message.date));
     await fs.mkdir(monthDir, { recursive: true });
 
-    const filePath = path.join(monthDir, `${formatTimestamp(message.date)}_${message.id}.json`);
+    const filePath = path.join(
+      monthDir,
+      `${formatTimestamp(message.date)}_f${message.folderId}_${message.id}.json`,
+    );
     const tmpPath = `${filePath}.tmp`;
     const payload = {
       id: message.id,
+      folderId: message.folderId,
       date: message.date.toISOString(),
       sender: message.sender,
       subject: message.subject,
