@@ -1,0 +1,13 @@
+services:
+  librus-forwarder:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - librus-forwarder-data:/data
+    restart: unless-stopped
+
+volumes:
+  librus-forwarder-data:
