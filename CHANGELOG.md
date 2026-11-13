@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/TomekGl/librus-forwarder/compare/v1.0.0...v1.1.0) (2026-11-13)
+
+
+### Features
+
+* add Slack notifier target ([#6](https://github.com/TomekGl/librus-forwarder/issues/6)) ([1810b5b](https://github.com/TomekGl/librus-forwarder/commit/1810b5bbcad3763fd4ca71e393ad9c4e5113ef4c))
+* archive every fetched message to per-message JSON files ([#4](https://github.com/TomekGl/librus-forwarder/issues/4)) ([d6dd9ff](https://github.com/TomekGl/librus-forwarder/commit/d6dd9ff6f5151e268ce650c3a301727021539d18))
+
 ## 1.0.0 (2026-11-13)
 
 
