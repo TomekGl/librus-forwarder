@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "librus-forwarder.fullname" . }}
+  labels:
+    {{- include "librus-forwarder.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "librus-forwarder.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "librus-forwarder.labels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      containers:
+        - name: librus-forwarder
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ include "librus-forwarder.fullname" . }}
+            - secretRef:
+                name: {{ .Values.secret.existingSecret | default (include "librus-forwarder.fullname" .) }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "librus-forwarder.fullname" . }}
