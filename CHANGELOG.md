@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/TomekGl/librus-forwarder/compare/v1.2.0...v1.3.0) (2026-11-14)
+
+
+### Features
+
+* add Kubernetes Helm chart and publish it to GHCR on release ([#10](https://github.com/TomekGl/librus-forwarder/issues/10)) ([6441449](https://github.com/TomekGl/librus-forwarder/commit/64414491eb223a9f7fbb1ce9f0df48b695be2e78))
+
 ## [1.2.0](https://github.com/TomekGl/librus-forwarder/compare/v1.1.0...v1.2.0) (2026-11-13)
 
 
