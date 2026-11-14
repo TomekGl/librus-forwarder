@@ -1,0 +1,33 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "librus-forwarder.fullname" . }}-ratelimit
+  labels:
+    {{- include "librus-forwarder.labels" . | nindent 4 }}
+spec:
+  rateLimit:
+    average: {{ .Values.ingress.rateLimit.average }}
+    burst: {{ .Values.ingress.rateLimit.burst }}
+    period: {{ .Values.ingress.rateLimit.period }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "librus-forwarder.fullname" . }}
+  labels:
+    {{- include "librus-forwarder.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    {{- toYaml .Values.ingress.entryPoints | nindent 4 }}
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.ingress.host }}`)
+      services:
+        - name: {{ include "librus-forwarder.fullname" . }}
+          port: {{ .Values.service.port }}
+      middlewares:
+        - name: {{ include "librus-forwarder.fullname" . }}-ratelimit
+  tls:
+    secretName: {{ .Values.ingress.tls.secretName | quote }}
+{{- end }}

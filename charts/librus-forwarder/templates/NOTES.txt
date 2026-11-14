@@ -1,0 +1,7 @@
+librus-forwarder zainstalowany.
+
+Endpoint do wywołania po nowej wiadomości (np. z procmaila):
+  POST https://{{ .Values.ingress.host }}/fetch/<FETCH_SECRET>
+
+Sprawdź stan:
+  kubectl logs -f deploy/{{ include "librus-forwarder.fullname" . }}

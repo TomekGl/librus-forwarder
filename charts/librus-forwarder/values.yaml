@@ -1,0 +1,59 @@
+image:
+  repository: ghcr.io/tomekgl/librus-forwarder
+  tag: "" # defaults to Chart.AppVersion
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+# Obraz jest budowany tylko dla linux/amd64
+nodeSelector:
+  kubernetes.io/arch: amd64
+
+service:
+  port: 8080
+
+persistence:
+  size: 1Gi
+  storageClassName: ""
+
+# Niewrażliwa konfiguracja aplikacji - pełna lista zmiennych i ich znaczenie w .env.example repo
+env:
+  PORT: "8080"
+  NOTIFY_TARGETS: "stdout,slack"
+  LIBRUS_FOLDER_IDS: "5,6"
+  STATE_FILE_PATH: /data/state.json
+  MESSAGE_ARCHIVE_DIR: /data/archive
+  LOG_LEVEL: info
+  LOG_PRETTY: "false"
+  LIBRUS_REQUEST_TIMEOUT_MS: "30000"
+
+# Dane wrażliwe. Albo wskaż własny, wcześniej utworzony Secret (existingSecret) z kluczami
+# FETCH_SECRET/LIBRUS_LOGIN/LIBRUS_PASSWORD/SLACK_WEBHOOK_URL, albo wypełnij poniższe pola
+# przez `helm install -f secrets.yaml` (plik NIE do commitowania) lub --set. Nigdy nie wpisuj
+# realnych wartości do tego pliku.
+secret:
+  existingSecret: ""
+  fetchSecret: ""
+  librusLogin: ""
+  librusPassword: ""
+  slackWebhookUrl: ""
+
+ingress:
+  enabled: true
+  host: librus-forwarder.example.com
+  entryPoints:
+    - websecure
+  # Nazwa Secretu z certyfikatem TLS dla powyższego hosta - musi już istnieć w tym namespace
+  # (np. wystawiony wcześniej przez cert-manager)
+  tls:
+    secretName: ""
+  rateLimit:
+    average: 5
+    burst: 10
+    period: 1m

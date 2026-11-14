@@ -73,3 +73,23 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Install Helm
+        uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
+
+      - name: Log in to GHCR (Helm)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Package and push Helm chart
+        env:
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          CHART_VERSION="${TAG_NAME#v}"
+          sed -i "s/^version: .*/version: ${CHART_VERSION}/" charts/librus-forwarder/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"${CHART_VERSION}\"/" charts/librus-forwarder/Chart.yaml
+          helm package charts/librus-forwarder
+          OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          helm push "librus-forwarder-${CHART_VERSION}.tgz" "oci://ghcr.io/${OWNER_LC}/charts"
