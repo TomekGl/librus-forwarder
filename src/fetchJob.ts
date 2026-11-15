@@ -1,9 +1,11 @@
 import type { AppConfig } from "./config.js";
 import type { Logger } from "./logger.js";
 import { LibrusClient, type MessageSummary } from "./librus/client.js";
-import { StateStore, type FolderState } from "./state/store.js";
+import { StateStore, type FolderState, type InFlight } from "./state/store.js";
 import type { Notifier } from "./notifiers/types.js";
 import { MessageArchiver } from "./archive/messageArchiver.js";
+
+const MAX_MESSAGE_ATTEMPTS = 3;
 
 export interface FetchStatus {
   running: boolean;
@@ -99,6 +101,7 @@ export class FetchJob {
     const state = await this.stateStore.load();
     const folderStates: Record<string, FolderState> = { ...(state?.folders ?? {}) };
     let totalNew = 0;
+    let failedMessages = 0;
 
     for (const folderId of this.config.folderIds) {
       signal.throwIfAborted();
@@ -137,48 +140,109 @@ export class FetchJob {
       totalNew += newMessages.length;
 
       for (const summary of newMessages) {
-        signal.throwIfAborted();
-        const rawDetail = await client.getMessageDetail(folderId, summary.id);
-        // W folderze "Wysłane" librus-api zwraca puste detail.sender (parsuje je tylko gdy
-        // nagłówek strony to "Nadawca", a dla wysłanych jest "Adresat") - lista (listMessages)
-        // ma tę nazwę poprawnie, więc używamy jej jako fallbacku.
-        const detail = rawDetail.sender ? rawDetail : { ...rawDetail, sender: summary.sender };
-        this.logger.info(
-          {
-            event: "message_fetched",
-            folderId,
-            messageId: detail.id,
-            sender: detail.sender,
-            subject: detail.subject,
-            date: detail.date.toISOString(),
-          },
-          `Folder ${folderId}: pobrano treść wiadomości ${detail.id}`,
-        );
-
-        signal.throwIfAborted();
-        await this.archiver.archive(detail);
-
-        for (const notifier of this.notifiers) {
-          signal.throwIfAborted();
-          await notifier.notify({
-            id: detail.id,
-            date: detail.date,
-            sender: detail.sender,
-            subject: detail.subject,
-            content: detail.content,
-          });
+        const ok = await this.processMessage(client, folderId, key, summary, folderStates, signal);
+        if (!ok) {
+          // Zachowujemy kolejność: nie wysyłamy nowszych wiadomości przed tą, która jeszcze się ponawia.
+          failedMessages += 1;
+          break;
         }
-
-        signal.throwIfAborted();
-        folderStates[key] = { lastMessageId: detail.id, lastMessageDate: detail.date.toISOString() };
-        await this.stateStore.save({ folders: folderStates, updatedAt: new Date().toISOString() });
       }
+    }
+
+    if (failedMessages > 0) {
+      throw new Error(`Nie udało się przetworzyć wiadomości w ${failedMessages} folderze(ach), ponowię przy kolejnym wywołaniu`);
     }
 
     this.logger.info(
       { event: "fetch_finished", durationMs: Date.now() - startedAt, newMessages: totalNew },
       "Zakończono sprawdzanie skrzynki",
     );
+  }
+  // Zwraca false, gdy wiadomość się nie powiodła i będzie ponawiana; true, gdy przetworzona lub
+  // porzucona po MAX_MESSAGE_ATTEMPTS (żeby jedna "zatruta" wiadomość nie blokowała kolejki).
+  private async processMessage(
+    client: LibrusClient,
+    folderId: number,
+    key: string,
+    summary: MessageSummary,
+    folderStates: Record<string, FolderState>,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    const folder = folderStates[key]!;
+    const inFlight: InFlight =
+      folder.inFlight?.messageId === summary.id
+        ? { ...folder.inFlight, delivered: [...folder.inFlight.delivered] }
+        : { messageId: summary.id, attempts: 0, delivered: [] };
+
+    const persist = async (next: FolderState): Promise<void> => {
+      folderStates[key] = next;
+      await this.stateStore.save({ folders: folderStates, updatedAt: new Date().toISOString() });
+    };
+
+    try {
+      signal.throwIfAborted();
+      const rawDetail = await client.getMessageDetail(folderId, summary.id);
+      // W folderze "Wysłane" librus-api zwraca puste detail.sender (parsuje je tylko gdy
+      // nagłówek strony to "Nadawca", a dla wysłanych jest "Adresat") - lista (listMessages)
+      // ma tę nazwę poprawnie, więc używamy jej jako fallbacku.
+      const detail = rawDetail.sender ? rawDetail : { ...rawDetail, sender: summary.sender };
+      this.logger.info(
+        {
+          event: "message_fetched",
+          folderId,
+          messageId: detail.id,
+          sender: detail.sender,
+          subject: detail.subject,
+          date: detail.date.toISOString(),
+        },
+        `Folder ${folderId}: pobrano treść wiadomości ${detail.id}`,
+      );
+
+      signal.throwIfAborted();
+      await this.archiver.archive(detail);
+
+      for (const notifier of this.notifiers) {
+        if (inFlight.delivered.includes(notifier.name)) continue;
+        signal.throwIfAborted();
+        await notifier.notify({
+          id: detail.id,
+          date: detail.date,
+          sender: detail.sender,
+          subject: detail.subject,
+          content: detail.content,
+        });
+        // Zapis po każdym udanym notifierze: ponowienie nie wyśle drugi raz tam, gdzie już poszło.
+        inFlight.delivered.push(notifier.name);
+        await persist({ ...folder, inFlight });
+      }
+
+      signal.throwIfAborted();
+      await persist({ lastMessageId: detail.id, lastMessageDate: detail.date.toISOString() });
+      return true;
+    } catch (err) {
+      if (signal.aborted) throw err;
+
+      inFlight.attempts += 1;
+      const giveUp = inFlight.attempts >= MAX_MESSAGE_ATTEMPTS;
+      this.logger.error(
+        {
+          event: giveUp ? "message_skipped" : "message_failed",
+          folderId,
+          messageId: summary.id,
+          attempts: inFlight.attempts,
+          error: serializeError(err),
+        },
+        giveUp
+          ? `Folder ${folderId}: wiadomość ${summary.id} pominięta po ${inFlight.attempts} nieudanych próbach`
+          : `Folder ${folderId}: wiadomość ${summary.id} nie powiodła się (próba ${inFlight.attempts}/${MAX_MESSAGE_ATTEMPTS})`,
+      );
+      if (giveUp) {
+        await persist({ lastMessageId: summary.id, lastMessageDate: summary.date.toISOString() });
+        return true;
+      }
+      await persist({ ...folder, inFlight });
+      return false;
+    }
   }
 }
 
