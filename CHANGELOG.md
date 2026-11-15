@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/TomekGl/librus-forwarder/compare/v1.3.2...v1.3.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* silence Fastify's automatic request logs for /healthz ([#17](https://github.com/TomekGl/librus-forwarder/issues/17)) ([05343f0](https://github.com/TomekGl/librus-forwarder/commit/05343f09d8808ba4f9359c3d4603955bc82ef30f))
+
 ## [1.3.2](https://github.com/TomekGl/librus-forwarder/compare/v1.3.1...v1.3.2) (2026-11-15)
 
 
