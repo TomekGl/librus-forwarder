@@ -18,6 +18,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       containers:
