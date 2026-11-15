@@ -10,11 +10,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      {{- include "librus-forwarder.labels" . | nindent 6 }}
+      {{- include "librus-forwarder.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "librus-forwarder.labels" . | nindent 8 }}
+        {{- include "librus-forwarder.selectorLabels" . | nindent 8 }}
     spec:
       securityContext:
         runAsNonRoot: true
