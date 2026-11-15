@@ -2,9 +2,17 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Logger } from "../logger.js";
 
+// Postęp przetwarzania wiadomości, która jeszcze nie przeszła w całości (np. Slack padł po stdout).
+export interface InFlight {
+  messageId: number;
+  attempts: number;
+  delivered: string[];
+}
+
 export interface FolderState {
   lastMessageId: number;
   lastMessageDate: string;
+  inFlight?: InFlight;
 }
 
 export interface FetchState {
