@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/TomekGl/librus-forwarder/compare/v1.3.0...v1.3.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* pin numeric UID/GID so Kubernetes can verify runAsNonRoot ([#12](https://github.com/TomekGl/librus-forwarder/issues/12)) ([c82bb5b](https://github.com/TomekGl/librus-forwarder/commit/c82bb5b06bef7565c7b324a99446218fba3fdcca))
+
 ## [1.3.0](https://github.com/TomekGl/librus-forwarder/compare/v1.2.0...v1.3.0) (2026-11-14)
 
 
