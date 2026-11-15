@@ -65,26 +65,9 @@ Since the service only checks Librus when asked, you need something to call `POS
 mailbox as soon as something arrives — so you can trigger a fetch **the moment that email shows
 up**, instead of polling blindly.
 
-The pattern: `fetchmail` pulls your mailbox down to a local MDA, and a `procmail` rule matches
-mail coming from Librus and fires the `curl` call. Nothing here needs to touch your real inbox
-content — the rule only looks at the `From` header.
-
-`~/.fetchmailrc` (mode `600`; fetchmail refuses to run otherwise):
-
-```
-poll mail.example.com with proto IMAP
-    user "you@example.com" there with password "your-mail-password" is youruser here
-    mda "/usr/bin/procmail -d %T"
-    ssl
-    keep
-```
-
-- Replace `mail.example.com` / `IMAP` with your actual provider's IMAP server (e.g. Gmail is
-  `imap.gmail.com`, and needs an app password, not your regular one).
-- `keep` leaves mail on the server instead of deleting it — drop it if you'd rather have fetchmail
-  consume the message once processed.
-- Run `fetchmail` on a short interval via cron/systemd timer (e.g. every minute) — it's a cheap
-  IMAP `IDLE`/poll, much lighter than polling Librus itself.
+If `procmail` is already your system's MDA (standard for local Unix mail delivery), add a rule
+that matches mail coming from Librus and fires the `curl` call. Nothing here needs to touch your
+real inbox content — the rule only looks at the `From` header.
 
 `~/.procmailrc`:
 
