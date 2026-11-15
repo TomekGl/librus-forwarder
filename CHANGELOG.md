@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.4](https://github.com/TomekGl/librus-forwarder/compare/v1.3.3...v1.3.4) (2026-11-15)
+
+
+### Bug Fixes
+
+* add fetch deadline, per-notifier retry tracking and richer /healthz ([#20](https://github.com/TomekGl/librus-forwarder/issues/20)) ([8e70851](https://github.com/TomekGl/librus-forwarder/commit/8e70851af51278bd6dd5602a56715802f3809692))
+* harden container securityContext in Helm chart ([#21](https://github.com/TomekGl/librus-forwarder/issues/21)) ([1c14032](https://github.com/TomekGl/librus-forwarder/commit/1c14032317ef9f10cdc547c14fc2cd527e0d7387))
+
 ## [1.3.3](https://github.com/TomekGl/librus-forwarder/compare/v1.3.2...v1.3.3) (2026-11-15)
 
 
