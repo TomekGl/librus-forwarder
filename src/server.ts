@@ -7,7 +7,12 @@ import type { FetchJob } from "./fetchJob.js";
 export function buildServer(config: AppConfig, logger: Logger, fetchJob: FetchJob) {
   const app = Fastify({ loggerInstance: logger });
 
-  app.get("/healthz", { logLevel: "silent" }, async () => ({ status: "ok" }));
+  // Zawsze 200 (restart poda nie naprawi błędnego hasła ani awarii Librusa), ale "degraded" +
+  // statystyki pozwalają monitoringowi zauważyć kolejne nieudane przebiegi.
+  app.get("/healthz", { logLevel: "silent" }, async () => {
+    const status = fetchJob.getStatus();
+    return { status: status.consecutiveFailures > 0 ? "degraded" : "ok", ...status };
+  });
 
   app.post<{ Params: { secret: string } }>("/fetch/:secret", async (request, reply) => {
     if (!isValidSecret(request.params.secret, config.fetchSecret)) {

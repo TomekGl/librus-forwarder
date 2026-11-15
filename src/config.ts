@@ -11,6 +11,7 @@ export interface AppConfig {
   logLevel: string;
   logPretty: boolean;
   requestTimeoutMs: number;
+  fetchDeadlineMs: number;
 }
 
 function required(name: string): string {
@@ -56,5 +57,6 @@ export function loadConfig(): AppConfig {
     logLevel: process.env.LOG_LEVEL ?? "info",
     logPretty: process.env.LOG_PRETTY === "true",
     requestTimeoutMs: Number(process.env.LIBRUS_REQUEST_TIMEOUT_MS ?? 30000),
+    fetchDeadlineMs: Number(process.env.FETCH_DEADLINE_MS ?? 300000),
   };
 }
