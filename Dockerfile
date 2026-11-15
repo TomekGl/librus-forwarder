@@ -19,7 +19,7 @@ WORKDIR /app
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./
-RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app \
+RUN addgroup -g 1001 -S app && adduser -u 1001 -S app -G app \
     && mkdir -p /data && chown app:app /data
 USER app
 EXPOSE 8080
