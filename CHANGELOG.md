@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/TomekGl/librus-forwarder/compare/v1.3.1...v1.3.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* avoid UID/GID 1000 collision with base image's node user ([#14](https://github.com/TomekGl/librus-forwarder/issues/14)) ([e3eb04e](https://github.com/TomekGl/librus-forwarder/commit/e3eb04e630f35c9a243b7463048f3104920abc0d))
+
 ## [1.3.1](https://github.com/TomekGl/librus-forwarder/compare/v1.3.0...v1.3.1) (2026-11-15)
 
 
