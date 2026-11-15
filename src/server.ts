@@ -7,7 +7,7 @@ import type { FetchJob } from "./fetchJob.js";
 export function buildServer(config: AppConfig, logger: Logger, fetchJob: FetchJob) {
   const app = Fastify({ loggerInstance: logger });
 
-  app.get("/healthz", async () => ({ status: "ok" }));
+  app.get("/healthz", { logLevel: "silent" }, async () => ({ status: "ok" }));
 
   app.post<{ Params: { secret: string } }>("/fetch/:secret", async (request, reply) => {
     if (!isValidSecret(request.params.secret, config.fetchSecret)) {
