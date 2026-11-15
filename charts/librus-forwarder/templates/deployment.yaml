@@ -21,12 +21,20 @@ spec:
         runAsUser: 1001
         runAsGroup: 1001
         fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       containers:
         - name: librus-forwarder
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - name: http
               containerPort: 8080
@@ -38,6 +46,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           livenessProbe:
             httpGet:
               path: /healthz
@@ -53,3 +63,5 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: {{ include "librus-forwarder.fullname" . }}
+        - name: tmp
+          emptyDir: {}
