@@ -23,6 +23,24 @@ All configuration is environment variables. See [`.env.example`](.env.example) f
 commented list (login/password, notify targets, Slack webhook, log level, timeouts, etc.) —
 that file is the source of truth, not duplicated here.
 
+## Slack setup
+
+The `slack` notifier posts through a Slack Incoming Webhook. A ready-made app manifest lives in
+[`misc/slack_app_manifest.yaml`](misc/slack_app_manifest.yaml).
+
+1. Go to <https://api.slack.com/apps> → **Create New App** → **From an app manifest**, pick your
+   workspace and paste the contents of the manifest.
+2. Open **Incoming Webhooks** (the manifest already grants the `incoming-webhook` scope) and click
+   **Add New Webhook to Workspace**. Choose the channel that should receive the messages.
+3. Copy the generated webhook URL (`https://hooks.slack.com/services/...`). Treat it as a secret.
+4. Provide it to the service:
+   - Docker / local: set `SLACK_WEBHOOK_URL` in `.env` and `NOTIFY_TARGETS=stdout,slack`.
+   - Kubernetes: put it under the `SLACK_WEBHOOK_URL` key of the Secret referenced by
+     `secret.existingSecret`, or set `secret.slackWebhookUrl` (via a values file that is not
+     committed). `NOTIFY_TARGETS` defaults to `stdout,slack` in the chart.
+5. Trigger a fetch (see [Triggering a fetch](#triggering-a-fetch)). Note that the first run only
+   sets the baseline, so Slack receives messages that arrive after it.
+
 ## Running locally
 
 ```bash
