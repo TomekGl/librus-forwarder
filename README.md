@@ -45,13 +45,19 @@ secret, Traefik CRDs). Each tagged release also publishes the chart as an OCI ar
 
 ## API
 
-- `GET /healthz` — liveness/readiness check, always returns `200 {"status":"ok"}`. Not logged
-  (see `src/server.ts`), so Kubernetes probes hitting this every few seconds don't drown out real
-  log lines.
+- `GET /healthz` — always `200` (a restart can't fix bad credentials or a Librus outage), with a JSON
+  body reporting job health: `status` (`ok`, or `degraded` after a failed run), `running`,
+  `lastSuccessAt`, `lastFailureAt`, `consecutiveFailures`. Point monitoring/alerting at `degraded`.
+  Not logged (see `src/server.ts`), so Kubernetes probes don't drown out real log lines.
 - `POST /fetch/<FETCH_SECRET>` — triggers a check of the Librus inbox. Responds `202` immediately
   and processes in the background; a second call while one is already running is queued, not run
   in parallel. Wrong secret → `404` (constant-time comparison, so failed attempts don't leak
   timing information about how much of the secret matched).
+
+Each run has a hard deadline (`FETCH_DEADLINE_MS`, default 5 minutes) so a hung Librus request can
+never wedge the service. If a notifier fails for a message, only that notifier is retried on the
+next call (already-delivered ones are not re-sent), and a message that fails 3 times is logged as
+`message_skipped` so it can't block newer ones.
 
 ```bash
 curl -X POST https://your-host/fetch/<FETCH_SECRET>
