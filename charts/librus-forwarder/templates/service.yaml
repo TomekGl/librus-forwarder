@@ -6,7 +6,7 @@ metadata:
     {{- include "librus-forwarder.labels" . | nindent 4 }}
 spec:
   selector:
-    {{- include "librus-forwarder.labels" . | nindent 4 }}
+    {{- include "librus-forwarder.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.service.port }}
