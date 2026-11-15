@@ -1,0 +1,16 @@
+display_information:
+  name: Librus Forwarder
+  description: Forwards new Librus Synergia inbox messages to Slack
+  background_color: "#2c2d30"
+features:
+  bot_user:
+    display_name: librus-forwarder
+    always_online: false
+oauth_config:
+  scopes:
+    bot:
+      - incoming-webhook
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
